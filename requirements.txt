@@ -2,3 +2,8 @@ Django==2.2.6
 Pillow==6.2.1
 pytz==2018.3
 sqlparse==0.3.0
+psycopg2==2.8.4
+gunicorn==20.0.0
+django-storages==1.7.2
+google-cloud-storage==1.23.0
+requests==2.22.0

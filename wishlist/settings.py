@@ -23,9 +23,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '3*5+g(sb+0dq*4m_cf@oedqyf$-$3%qcmtwu+6t=hkg#=r4+7p'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+if os.getenv('GAE_INSTANCE'):
+    DEBUG = False
+else:
+    DEBUG = True 
 
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = ['wishlist-258923.appspot.com', '127.0.0.1']
 
 LOGIN_URL = '/admin'
 # Application definition
@@ -76,10 +80,20 @@ WSGI_APPLICATION = 'wishlist.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'places',
+        'USER': 'clara',
+        'PASSWORD': 'clara', # os.getenv('TRAVELER_PW'),
+        'HOST': '/cloudsql/wishlist-258923:us-central1:wishlist-db',
+        'PORT': '5432'
     }
 }
+
+# If not running at GAE, then replace the host with your local
+# computer to connect to the database via cloud_sql_proxy
+if not os.getenv('GAE_INSTANCE'):
+    DATABASES['default']['HOST'] = '127.0.0.1'
+
 
 
 # Password validation
@@ -121,10 +135,24 @@ USE_TZ = True
 # Specify a location to copy static files to when running python manage.py collectstatic
 STATIC_ROOT = os.path.join(BASE_DIR, 'www', 'static')
 
-STATIC_URL = '/static/'
+# STATIC_URL = '/static/'
 
 # Media URL, for user-created media - becomes part of URL when images are displayed
-MEDIA_URL = '/media/'
+# MEDIA_URL = '/media/'
 
 # Where in the file system to save user-uploaded files
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+from google.oauth2 import service_account
+GS_CREDENTIALS = service_account.Credentials.from_service_account_file("travel-credentials.json")
+
+GS_STATIC_FILE_BUCKET = 'wishlist-258923.appspot.com'
+
+STATIC_URL = f'https://storage.cloud.google.com/{GS_STATIC_FILE_BUCKET}/static/'
+
+DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+GS_BUCKET_NAME = 'user-place-images-1'
+
+MEDIA_URL = f'https://storage.cloud.google.com/{GS_BUCKET_NAME}/static/'
+
