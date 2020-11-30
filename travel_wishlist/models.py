@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.core.files.storage import default_storage
 
 class CatFact(models.Model):
-    fact = models.CharField(max_length=500)
+    fact = models.CharField(max_length=500, unique=True)
 
     def __str__(self):
         return self.fact

@@ -6,10 +6,104 @@ from django.test import TestCase
 from django.urls import reverse
 from django.test import override_settings
 
+from django.db.transaction import atomic
+
+from unittest.mock import patch 
+
 from django.contrib.auth.models import User
+
 from .models import Place
+from .models import CatFact
 
 from PIL import Image 
+
+
+
+class TestCatFactAPI(TestCase):
+
+    @patch('requests.Response.json')
+    def test_add_new_cat_fact(self, mock_api_json_response):
+
+        # An example response from the API, it can be cleaner to set it here 
+        # than in the @patch decorator for a longer JSON response
+        mock_api_json_response.side_effect = [ {'fact': 'cats say meow'} ]
+
+        # Make request
+        response = self.client.get(reverse('admin_get_cat_fact'))
+
+        # expect a 200 / OK response but no particular content
+        self.assertEqual(200, response.status_code)
+        
+        # But there should be 1 new cat fact in the database 
+        self.assertEqual(1, CatFact.objects.count())
+        
+        # Get that cat fact - should be the same text 
+        new_cat_fact = CatFact.objects.first()
+        self.assertEqual('cats say meow', new_cat_fact.fact)
+        
+
+
+    @patch('requests.Response.json')
+    def test_add_two_new_cat_facts(self, mock_api_json_response):
+
+        # An example response from the API, it can be cleaner to set it here 
+        # than in the @patch decorator for a longer JSON response
+        mock_api_json_response.side_effect = [ 
+            {'fact': 'cats say meow'},   # first response to API call
+            {'fact': 'cats are not dogs'}    # second response - different fact
+        ]
+
+        # Make request
+        response1 = self.client.get(reverse('admin_get_cat_fact'))
+        
+         # Make request again - expect second fact - that's the same as the first
+        response2 = self.client.get(reverse('admin_get_cat_fact'))
+
+        # expect a 200 / OK response from both but no particular content
+        self.assertEqual(200, response1.status_code)
+        self.assertEqual(200, response2.status_code)
+        
+        # But there should be 2 new cat facts in the database 
+        self.assertEqual(2, CatFact.objects.count())
+        
+        CatFact.objects.get(fact='cats say meow')  # error and hence test fail if this fact not in DB
+        CatFact.objects.get(fact='cats are not dogs')  # error and hence test fail if this fact not in DB
+
+
+
+
+    @patch('requests.Response.json')
+    def test_no_error_no_duplicate_cat_fact_added_when_same_fact_returned_from_the_api(self, mock_api_json_response):
+
+        
+
+        # An example response from the API, it can be cleaner to set it here 
+        # than in the @patch decorator for a longer JSON response
+        mock_api_json_response.side_effect = [ 
+            {'fact': 'cats say meow'},   # first response to API call
+            {'fact': 'cats say meow'}    # second response - same as the first
+        ]
+
+        # Make request
+        response = self.client.get(reverse('admin_get_cat_fact'))
+        
+        # Since IntegrityErrors are raised in the test and the DB has to be rolled back 
+        # need to make sure this specific call is atomic and completely finished 
+        # before the assert statements that check the database or the DB 
+        with atomic():
+            # Make request again - expect second fact - that's the same as the first
+            response2 = self.client.get(reverse('admin_get_cat_fact'))
+
+        # expect a 200 / OK response but no particular content
+        self.assertEqual(200, response2.status_code)
+
+        # But there should be 1 new cat fact in the database, not two
+        self.assertEqual(1, CatFact.objects.count())
+        
+        # Get that cat fact - should be the same text 
+        new_cat_fact = CatFact.objects.first()
+        self.assertEqual('cats say meow', new_cat_fact.fact)
+        
 
 
 class TestViewHomePageIsEmptyList(TestCase):
