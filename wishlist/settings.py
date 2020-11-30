@@ -91,8 +91,19 @@ DATABASES = {
 
 # If not running at GAE, then replace the host with your local
 # computer to connect to the database via cloud_sql_proxy
-if not os.getenv('GAE_INSTANCE'):
-    DATABASES['default']['HOST'] = '127.0.0.1'
+# if not os.getenv('GAE_INSTANCE'):    
+    # DATABASES['default']['HOST'] = '127.0.0.1'
+
+
+# Alternatively, if not GAE, use local SQLite 
+if not os.getenv('GAE_INSTANCE'):    
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'db.sqlite3'
+        }
+    }
+
 
 
 
@@ -133,26 +144,26 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 # Specify a location to copy static files to when running python manage.py collectstatic
-STATIC_ROOT = os.path.join(BASE_DIR, 'www', 'static')
+# STATIC_ROOT = os.path.join(BASE_DIR, 'www', 'static')
 
-# STATIC_URL = '/static/'
+STATIC_URL = '/static/'
 
 # Media URL, for user-created media - becomes part of URL when images are displayed
-# MEDIA_URL = '/media/'
+MEDIA_URL = '/media/'
 
 # Where in the file system to save user-uploaded files
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
-from google.oauth2 import service_account
-GS_CREDENTIALS = service_account.Credentials.from_service_account_file("travel-credentials.json")
+# from google.oauth2 import service_account
+# GS_CREDENTIALS = service_account.Credentials.from_service_account_file("travel-credentials.json")
 
-GS_STATIC_FILE_BUCKET = 'wishlist-258923.appspot.com'
+# GS_STATIC_FILE_BUCKET = 'wishlist-258923.appspot.com'
 
-STATIC_URL = f'https://storage.cloud.google.com/{GS_STATIC_FILE_BUCKET}/static/'
+# STATIC_URL = f'https://storage.cloud.google.com/{GS_STATIC_FILE_BUCKET}/static/'
 
-DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-GS_BUCKET_NAME = 'user-place-images-1'
+# DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+# GS_BUCKET_NAME = 'user-place-images-1'
 
-MEDIA_URL = f'https://storage.cloud.google.com/{GS_BUCKET_NAME}/static/'
+# MEDIA_URL = f'https://storage.cloud.google.com/{GS_BUCKET_NAME}/static/'
 
